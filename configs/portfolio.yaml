@@ -1,0 +1,17 @@
+portfolio:
+  name: large_cap_equal_weight
+  tickers:
+    - AAPL
+    - MSFT
+    - AMZN
+    - GOOGL
+    - META
+    - NVDA
+    - JPM
+    - UNH
+    - XOM
+    - PG
+
+  weighting: equal
+  notional: 10000000  # $10MM
+  rebalance: monthly

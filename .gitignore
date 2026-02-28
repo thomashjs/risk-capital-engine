@@ -82,6 +82,36 @@ target/
 profile_default/
 ipython_config.py
 
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# VSCode
+.vscode/
+
+# MacOS
+.DS_Store
+
+# Data files (DO NOT commit raw market data)
+data/raw/*
+data/processed/*
+
+# But keep folder structure
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# Reports generated outputs (if large images)
+reports/*.png
+reports/*.pdf
+
+# Coverage reports
+htmlcov/
+.coverage
 # pyenv
 #   For a library or package, you might want to ignore these files since the code is
 #   intended to run in multiple environments; otherwise, check them in:
