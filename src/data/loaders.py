@@ -9,6 +9,7 @@ def load_prices(
     end: str,
     raw_dir: str | Path = "data/raw",
     processed_dir: str | Path = "data/processed",
+    use_cache: bool = True,
     save: bool = True
 ) -> pd.DataFrame:
     """
@@ -44,6 +45,13 @@ def load_prices(
     raw_dir.mkdir(parents=True, exist_ok=True)
     processed_dir.mkdir(parents=True, exist_ok=True)
 
+### Check for cached data before downloading
+    parquet_file = processed_dir / "prices_clean.parquet"
+    if use_cache and parquet_file.exists():
+        prices_cached = pd.read_parquet(parquet_file)
+        if _data_covers_request(prices_cached, tickers, start, end):
+            return prices_cached.loc[start:end, tickers]
+    
     data = yf.download(
         tickers=tickers,
         start=start,
@@ -71,3 +79,21 @@ def load_prices(
         prices.to_parquet(processed_dir / "prices_clean.parquet")
 
     return prices
+
+def _data_covers_request(
+    prices: pd.DataFrame,
+    tickers: list[str],
+    start: str,
+    end: str
+) -> bool:
+
+    if not all(t in prices.columns for t in tickers):
+        return False
+
+    if prices.index.min() > pd.to_datetime(start):
+        return False
+
+    if prices.index.max() < pd.to_datetime(end):
+        return False
+
+    return True
