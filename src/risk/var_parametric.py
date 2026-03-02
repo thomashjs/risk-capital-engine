@@ -26,17 +26,13 @@ def parametric_var(
 
     Parameters
     ----------
-    returns : pd.DataFrame
-        Historical asset returns.
-    portfolio : Portfolio
-        Portfolio object containing weights and notional.
-    alpha : float
-        Confidence level (e.g. 0.99).
+    returns : Historical asset returns.
+    portfolio : Portfolio object containing weights and notional.
+    alpha : Confidence level (e.g. 0.99).
 
     Returns
     -------
-    float
-        Positive VaR value.
+    Positive VaR value.
     """
 
     if not 0.0 < alpha < 1.0:
