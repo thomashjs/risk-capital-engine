@@ -36,4 +36,4 @@ alpha: float = 0.99
 var_value: float = historical_var(pnl, alpha)
 es_value: float = historical_expected_shortfall(pnl, alpha)
 
-print(var_value, es_value)
+print(var_value, es_value, pnl.std())
