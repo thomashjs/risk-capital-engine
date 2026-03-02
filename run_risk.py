@@ -5,6 +5,7 @@ from src.data.loaders import load_prices
 from src.data.features import compute_log_returns
 from src.portfolio.pnl import compute_portfolio_pnl
 from src.portfolio.positions import Portfolio
+from src.risk.var_parametric import parametric_var
 
 """
 tests expected shortfall and value-at-risk calculations using historical PnL data
@@ -37,3 +38,8 @@ var_value: float = historical_var(pnl, alpha)
 es_value: float = historical_expected_shortfall(pnl, alpha)
 
 print(var_value, es_value, pnl.std())
+
+### Test Parametric VaR calculation
+param_var: float = parametric_var(returns, portfolio, alpha)
+
+print(f"Parametric VaR (99%): {param_var:,.2f}")
