@@ -17,27 +17,7 @@ def load_prices(
 
     Prices are downloaded from Yahoo Finance and optionally saved to disk
     in both raw CSV format and cleaned parquet format.
-
-    Parameters
-    ----------
-    tickers : list[str]
-        List of ticker symbols.
-    start : str
-        Start date (YYYY-MM-DD).
-    end : str
-        End date (YYYY-MM-DD).
-    raw_dir : str or Path
-        Directory for storing raw downloaded CSV files.
-    processed_dir : str or Path
-        Directory for storing cleaned parquet files.
-    save : bool
-        Whether to persist data to disk.
-
-    Returns
-    -------
-    pd.DataFrame
-        DataFrame of adjusted close prices indexed by date.
-    """
+"""
 
     raw_dir = Path(raw_dir)
     processed_dir = Path(processed_dir)
@@ -48,8 +28,10 @@ def load_prices(
 ### Check for cached data before downloading
     parquet_file = processed_dir / "prices_clean.parquet"
     if use_cache and parquet_file.exists():
+        print("Cached prices available")
         prices_cached = pd.read_parquet(parquet_file)
         if _data_covers_request(prices_cached, tickers, start, end):
+            print("Cached data covers request. Loading from cache.")
             return prices_cached.loc[start:end, tickers]
     
     data = yf.download(
@@ -90,10 +72,10 @@ def _data_covers_request(
     if not all(t in prices.columns for t in tickers):
         return False
 
-    if prices.index.min() > pd.to_datetime(start):
-        return False
+    end_dt = pd.to_datetime(end)
 
-    if prices.index.max() < pd.to_datetime(end):
+    # yfinance end date is exclusive
+    if prices.index.max() < end_dt - pd.Timedelta(days=1):
         return False
 
     return True
