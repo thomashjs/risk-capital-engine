@@ -8,9 +8,10 @@ from src.portfolio.pnl import compute_portfolio_pnl
 from src.portfolio.positions import Portfolio
 from src.risk.var_parametric import parametric_var
 from src.risk.covariance import sample_covariance, ewma_covariance
+from src.risk.var_montecarlo import mc_var
 
 """
-tests expected shortfall and value-at-risk calculations using historical PnL data
+tests expected shortfall and value-at-risk calculations using various methods
 """
 
 portfolio_cfg = load_config("configs/portfolio.yaml")
@@ -63,3 +64,8 @@ print("20d portfolio std:",
       np.sqrt(portfolio.weights.T @ sample_covariance(recent20) @ portfolio.weights))
 print("60d portfolio std:",
       np.sqrt(portfolio.weights.T @ sample_covariance(recent60) @ portfolio.weights))
+
+### Test Monte Carlo VaR calculation
+mc_var_value = mc_var(returns, portfolio, 0.99)
+
+print("Monte Carlo VaR:", mc_var_value)
