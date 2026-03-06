@@ -10,6 +10,7 @@ from src.risk.var_parametric import parametric_var
 from src.risk.covariance import sample_covariance, ewma_covariance
 from src.risk.var_montecarlo import mc_var
 from src.risk.var_fhs import fhs_var
+from src.backtest.rolling import rolling_var_backtest
 
 """
 tests expected shortfall and value-at-risk calculations using various methods
@@ -76,3 +77,36 @@ print("Monte Carlo VaR:", mc_var_value)
 fhs_value = fhs_var(returns, portfolio, 0.99)
 
 print("FHS VaR:", fhs_value)
+
+### Test rolling backtest
+bt_hist = rolling_var_backtest(
+    returns,
+    portfolio,
+    alpha=0.99,
+    window=250,
+    model="historical",
+)
+
+bt_ewma = rolling_var_backtest(
+    returns,
+    portfolio,
+    alpha=0.99,
+    window=250,
+    model="parametric_ewma",
+)
+
+bt_fhs = rolling_var_backtest(
+    returns,
+    portfolio,
+    alpha=0.99,
+    window=250,
+    model="fhs",
+    n_sims=5000,
+    seed=42,
+)
+
+print("Rolling backtest results:")
+print("Head:", bt_hist.head())
+print("Historical Exceptions:", bt_hist["Exception"].sum())
+print("EWMA Exceptions:", bt_ewma["Exception"].sum())
+print("FHS Exceptions:", bt_fhs["Exception"].sum())
