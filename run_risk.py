@@ -40,7 +40,7 @@ alpha: float = 0.99
 var_value: float = historical_var(pnl, alpha)
 es_value: float = historical_expected_shortfall(pnl, alpha)
 
-print(var_value, es_value, pnl.std())
+print("Historical VaR: ", var_value, "\nExpected Shortfall: ", es_value, "\nPortfolio Std: ", pnl.std())
 
 ### Test Parametric VaR calculation
 param_var_sample = parametric_var(returns, portfolio, 0.99, method="sample")

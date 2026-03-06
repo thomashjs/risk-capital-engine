@@ -43,8 +43,8 @@ def mc_var(
     if seed is not None:
         np.random.seed(seed)
 
-    sims = np.random.multivariate_normal(mu, cov, n_sims)
-
+    sims = np.random.multivariate_normal(mu, cov, n_sims) # assume r_t are i.i.d. normal with sample cov conditioned on t
+                                                          # EWMA doesn't assume identical distributions, cov varies with t
     portfolio_returns = sims @ portfolio.weights
 
     pnl_sims = portfolio_returns * portfolio.notional
