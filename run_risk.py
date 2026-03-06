@@ -9,6 +9,7 @@ from src.portfolio.positions import Portfolio
 from src.risk.var_parametric import parametric_var
 from src.risk.covariance import sample_covariance, ewma_covariance
 from src.risk.var_montecarlo import mc_var
+from src.risk.var_fhs import fhs_var
 
 """
 tests expected shortfall and value-at-risk calculations using various methods
@@ -69,3 +70,9 @@ print("60d portfolio std:",
 mc_var_value = mc_var(returns, portfolio, 0.99)
 
 print("Monte Carlo VaR:", mc_var_value)
+
+### Test Filtered Historical Simulation VaR calculation
+
+fhs_value = fhs_var(returns, portfolio, 0.99)
+
+print("FHS VaR:", fhs_value)
