@@ -19,7 +19,7 @@ def _ewma_volatility(returns: pd.DataFrame, lambda_: float) -> pd.DataFrame:
 
     vol = np.zeros((n_obs, n_assets))
 
-    vol[0] = np.std(values, axis=0)
+    vol[0] = np.std(values, axis=0) # Initialize with sample std dev
 
     for t in range(1, n_obs):
         vol[t] = np.sqrt(
