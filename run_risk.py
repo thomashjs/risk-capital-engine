@@ -11,6 +11,7 @@ from src.risk.covariance import sample_covariance, ewma_covariance
 from src.risk.var_montecarlo import mc_var
 from src.risk.var_fhs import fhs_var
 from src.backtest.rolling import rolling_var_backtest
+from src.backtest.kupiec import kupiec_test
 
 """
 tests expected shortfall and value-at-risk calculations using various methods
@@ -67,7 +68,7 @@ print("20d portfolio std:",
 print("60d portfolio std:",
       np.sqrt(portfolio.weights.T @ sample_covariance(recent60) @ portfolio.weights))
 
-### Test Monte Carlo VaR calculation
+### Test Monte Carlo (Sample Covariance) VaR calculation
 mc_var_value = mc_var(returns, portfolio, 0.99)
 
 print("Monte Carlo VaR:", mc_var_value)
@@ -95,6 +96,26 @@ bt_ewma = rolling_var_backtest(
     model="parametric_ewma",
 )
 
+bt_mc_sample = rolling_var_backtest(
+    returns,
+    portfolio,
+    alpha=0.99,
+    window=250,
+    model="mc_sample",
+    n_sims=5000,
+    seed=42,
+)
+
+bt_mc_ewma = rolling_var_backtest(
+    returns,
+    portfolio,
+    alpha=0.99,
+    window=250,
+    model="mc_ewma",
+    n_sims=5000,
+    seed=42,
+)
+
 bt_fhs = rolling_var_backtest(
     returns,
     portfolio,
@@ -108,5 +129,18 @@ bt_fhs = rolling_var_backtest(
 print("Rolling backtest results:")
 print("Head:", bt_hist.head())
 print("Historical Exceptions:", bt_hist["Exception"].sum())
-print("EWMA Exceptions:", bt_ewma["Exception"].sum())
+print("Parametric EWMA Exceptions:", bt_ewma["Exception"].sum())
+print("Monte Carlo Sample Exceptions:", bt_mc_sample["Exception"].sum())
+print("Monte Carlo EWMA Exceptions:", bt_mc_ewma["Exception"].sum())
 print("FHS Exceptions:", bt_fhs["Exception"].sum())
+
+### Test Kupiec backtest
+result = {"Historical": kupiec_test(bt_hist, alpha=0.99),
+          "Parametric EWMA": kupiec_test(bt_ewma, alpha=0.99),
+          "Monte Carlo Sample": kupiec_test(bt_mc_sample, alpha=0.99),
+          "Monte Carlo EWMA": kupiec_test(bt_mc_ewma, alpha=0.99),
+          "FHS": kupiec_test(bt_fhs, alpha=0.99)}
+print("Kupiec Results:")
+for model, res in result.items():
+    print(f"{model}: Exceptions={res['exceptions']}, Observations={res['observations']}, "
+          f"LR={res['LR']:.4f}, p-value={res['p_value']:.4f}")
