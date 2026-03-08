@@ -10,25 +10,7 @@ resamples shocks, then rescales them with current volatility.
 import numpy as np
 import pandas as pd
 from src.portfolio.positions import Portfolio
-
-
-def _ewma_volatility(returns: pd.DataFrame, lambda_: float) -> pd.DataFrame:
-
-    values = returns.to_numpy()
-    n_obs, n_assets = values.shape
-
-    vol = np.zeros((n_obs, n_assets))
-
-    vol[0] = np.std(values, axis=0) # Initialize with sample std dev
-
-    for t in range(1, n_obs):
-        vol[t] = np.sqrt(
-            lambda_ * vol[t - 1] ** 2 +
-            (1 - lambda_) * values[t - 1] ** 2
-        )
-
-    return pd.DataFrame(vol, index=returns.index, columns=returns.columns)
-
+from src.risk.volatility import _ewma_volatility
 
 def fhs_var(
     returns: pd.DataFrame,
@@ -36,6 +18,7 @@ def fhs_var(
     alpha: float,
     n_sims: int = 10000,
     lambda_: float = 0.94,
+    burn_in: int = 50,
     seed: int | None = None
 ) -> float:
 
@@ -50,8 +33,9 @@ def fhs_var(
     vol = _ewma_volatility(aligned, lambda_)
 
     standardized = aligned / vol
+    standardized = standardized.iloc[burn_in:] # discard burn-in period for better shock sampling
 
-    shocks = standardized.to_numpy()
+    shocks = standardized.dropna().to_numpy()
 
     if seed is not None:
         np.random.seed(seed)
