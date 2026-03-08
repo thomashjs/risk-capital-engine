@@ -74,7 +74,7 @@ print("Monte Carlo VaR:", mc_var_value)
 
 ### Test Filtered Historical Simulation VaR calculation
 
-fhs_value = fhs_var(returns, portfolio, 0.99, print_diff=True)
+fhs_value = fhs_var(returns, portfolio, 0.99)
 
 print("FHS VaR:", fhs_value)
 
