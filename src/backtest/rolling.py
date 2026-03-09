@@ -44,6 +44,8 @@ def rolling_var_backtest(
 
     aligned = returns[portfolio.tickers]
 
+    portfolio_pnl = compute_portfolio_pnl(aligned, portfolio)
+
     dates: list[pd.Timestamp] = []
     var_values: list[float] = []
     realized_pnl_values: list[float] = []
@@ -51,11 +53,10 @@ def rolling_var_backtest(
 
     for t in range(window, len(aligned)):
         window_returns = aligned.iloc[t - window:t]
-        next_day_returns = aligned.iloc[[t]]
-        next_day_pnl = float(compute_portfolio_pnl(next_day_returns, portfolio).iloc[0])
+        next_day_pnl = float(portfolio_pnl.iloc[t])
 
         if model == "historical":
-            window_pnl = compute_portfolio_pnl(window_returns, portfolio)
+            window_pnl = portfolio_pnl.iloc[t - window:t]
             var_value = historical_var(window_pnl, alpha)
         elif model == "parametric_sample":
             var_value = parametric_var(
@@ -116,12 +117,17 @@ def rolling_var_backtest(
         var_values.append(var_value)
         realized_pnl_values.append(next_day_pnl)
         exceptions.append(exception)
-
-    return pd.DataFrame(
+    
+    result = pd.DataFrame(
         {
             "VaR": var_values,
             "PnL": realized_pnl_values,
             "Exception": exceptions,
         },
         index=dates,
-    )
+        )
+    result["Loss"] = -result["PnL"]
+    result["Model"] = model
+    result["Alpha"] = alpha
+    
+    return result

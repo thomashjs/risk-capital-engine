@@ -86,6 +86,7 @@ bt_hist = rolling_var_backtest(
     alpha=0.99,
     window=250,
     model="historical",
+    n_sims=5000
 )
 
 bt_ewma = rolling_var_backtest(
@@ -94,6 +95,7 @@ bt_ewma = rolling_var_backtest(
     alpha=0.99,
     window=250,
     model="parametric_ewma",
+    n_sims=5000
 )
 
 bt_mc_sample = rolling_var_backtest(
@@ -127,7 +129,7 @@ bt_fhs = rolling_var_backtest(
 )
 
 print("Rolling backtest results:")
-print("Head:", bt_hist.head())
+print("Head:\n", bt_hist.head())
 print("Historical Exceptions:", bt_hist["Exception"].sum())
 print("Parametric EWMA Exceptions:", bt_ewma["Exception"].sum())
 print("Monte Carlo Sample Exceptions:", bt_mc_sample["Exception"].sum())
@@ -144,3 +146,15 @@ print("Kupiec Results:")
 for model, res in result.items():
     print(f"{model}: Exceptions={res['exceptions']}, Observations={res['observations']}, "
           f"LR={res['LR']:.4f}, p-value={res['p_value']:.4f}")
+    
+### Test Diagnostics on historical backtest results
+from src.backtest.diagnostics import (
+    plot_var_vs_loss,
+    plot_exceptions,
+    exception_summary,
+)
+
+plot_var_vs_loss(bt_hist)
+plot_exceptions(bt_hist)
+
+print(exception_summary(bt_hist))

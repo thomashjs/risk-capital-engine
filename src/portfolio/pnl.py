@@ -6,9 +6,6 @@ Portfolio PnL engine.
 Responsible for transforming asset return matrices into:
 - Portfolio returns
 - Portfolio PnL series
-
-This module isolates linear PnL computation logic,
-making it extensible to non-linear instruments later.
 """
 
 import pandas as pd

@@ -18,9 +18,9 @@ def load_prices(
     Prices are downloaded from Yahoo Finance and optionally saved to disk
     in both raw CSV format and cleaned parquet format.
 """
-
-    raw_dir = Path(raw_dir)
-    processed_dir = Path(processed_dir)
+    root = Path(__file__).resolve().parents[2]
+    raw_dir = root / Path(raw_dir)
+    processed_dir = root / Path(processed_dir)
 
     raw_dir.mkdir(parents=True, exist_ok=True)
     processed_dir.mkdir(parents=True, exist_ok=True)
@@ -34,6 +34,7 @@ def load_prices(
             print("Cached data covers request. Loading from cache.")
             return prices_cached.loc[start:end, tickers]
     
+    print("Downloading price data from Yahoo Finance...")
     data = yf.download(
         tickers=tickers,
         start=start,

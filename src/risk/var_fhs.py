@@ -19,6 +19,7 @@ def fhs_var(
     n_sims: int = 10000,
     lambda_: float = 0.94,
     burn_in: int = 50,
+    demean: bool = True,
     seed: int | None = None
 ) -> float:
 
@@ -30,6 +31,10 @@ def fhs_var(
 
     aligned = returns[portfolio.tickers]
 
+    # default demean; optionally disable
+    if demean:
+        aligned = aligned - aligned.mean()
+    
     vol = _ewma_volatility(aligned, lambda_)
 
     standardized = aligned / vol
