@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from src.risk.var_historical import historical_var
 from src.risk.expected_shortfall import historical_expected_shortfall
 from src.utils.config import load_config
@@ -12,6 +13,7 @@ from src.risk.var_montecarlo import mc_var
 from src.risk.var_fhs import fhs_var
 from src.backtest.rolling import rolling_var_backtest
 from src.backtest.kupiec import kupiec_test
+from pathlib import Path
 
 """
 tests expected shortfall and value-at-risk calculations using various methods
@@ -79,28 +81,44 @@ fhs_value = fhs_var(returns, portfolio, 0.99)
 
 print("FHS VaR:", fhs_value)
 
-### Test rolling backtest
-bt_hist = rolling_var_backtest(
-    returns,
-    portfolio,
+### Rolling backtest if not already in data
+
+root = Path(__file__).resolve().parent
+data_dir = root / Path("data/processed")
+
+def run_or_load_backtest(name: str, **kwargs) -> pd.DataFrame:
+    path = data_dir / f"{name}_backtest.parquet"
+    if path.exists():
+        return pd.read_parquet(path)
+    else:
+        result = rolling_var_backtest(**kwargs)
+        result.to_parquet(path)
+        return result
+
+bt_hist = run_or_load_backtest(
+    "historical",
+    returns = returns,
+    portfolio = portfolio,
     alpha=0.99,
     window=250,
     model="historical",
     n_sims=5000
 )
 
-bt_ewma = rolling_var_backtest(
-    returns,
-    portfolio,
+bt_ewma = run_or_load_backtest(
+    "parametric_ewma",
+    returns = returns,
+    portfolio = portfolio,
     alpha=0.99,
     window=250,
     model="parametric_ewma",
     n_sims=5000
 )
 
-bt_mc_sample = rolling_var_backtest(
-    returns,
-    portfolio,
+bt_mc_sample = run_or_load_backtest(
+    "mc_sample",
+    returns = returns,
+    portfolio = portfolio,
     alpha=0.99,
     window=250,
     model="mc_sample",
@@ -108,9 +126,10 @@ bt_mc_sample = rolling_var_backtest(
     seed=42,
 )
 
-bt_mc_ewma = rolling_var_backtest(
-    returns,
-    portfolio,
+bt_mc_ewma = run_or_load_backtest(
+    "mc_ewma",
+    returns = returns,
+    portfolio = portfolio,
     alpha=0.99,
     window=250,
     model="mc_ewma",
@@ -118,9 +137,10 @@ bt_mc_ewma = rolling_var_backtest(
     seed=42,
 )
 
-bt_fhs = rolling_var_backtest(
-    returns,
-    portfolio,
+bt_fhs = run_or_load_backtest(
+    "fhs",
+    returns = returns,
+    portfolio = portfolio,
     alpha=0.99,
     window=250,
     model="fhs",
@@ -128,8 +148,8 @@ bt_fhs = rolling_var_backtest(
     seed=42,
 )
 
+# Results summary
 print("Rolling backtest results:")
-print("Head:\n", bt_hist.head())
 print("Historical Exceptions:", bt_hist["Exception"].sum())
 print("Parametric EWMA Exceptions:", bt_ewma["Exception"].sum())
 print("Monte Carlo Sample Exceptions:", bt_mc_sample["Exception"].sum())

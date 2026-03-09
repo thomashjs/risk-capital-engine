@@ -20,6 +20,7 @@ def mc_var(
     n_sims: int = 10000,
     method: str = "sample",
     lambda_: float = 0.94,
+    mean_zero: bool = False,
     seed: int | None = None
 ) -> float:
 
@@ -31,7 +32,11 @@ def mc_var(
 
     aligned = returns[portfolio.tickers]
 
-    mu = aligned.mean().to_numpy()
+    # Sample mean as default; can optionally set to 0
+    if mean_zero:
+        mu = np.zeros(len(portfolio.tickers))
+    else:
+        mu = aligned.mean().to_numpy()
 
     if method == "sample":
         cov = sample_covariance(aligned)
