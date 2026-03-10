@@ -168,13 +168,18 @@ for model, res in result.items():
           f"LR={res['LR']:.4f}, p-value={res['p_value']:.4f}")
     
 ### Test Diagnostics on historical backtest results
-from src.backtest.diagnostics import (
-    plot_var_vs_loss,
-    plot_exceptions,
-    exception_summary,
-)
+from src.backtest.diagnostics import exception_summary
+print("Exception Summary (Historical):", exception_summary(bt_hist))
 
-plot_var_vs_loss(bt_hist)
-plot_exceptions(bt_hist)
+### Test Christofferson test on historical backtest results
+from src.backtest.christoffersen import christoffersen_test
 
-print(exception_summary(bt_hist))
+result = {"Historical": christoffersen_test(bt_hist), 
+          "Parametric EWMA": christoffersen_test(bt_ewma),
+          "Monte Carlo Sample": christoffersen_test(bt_mc_sample),
+          "Monte Carlo EWMA": christoffersen_test(bt_mc_ewma),
+          "FHS": christoffersen_test(bt_fhs)}
+
+print("Christoffersen Test Results:")
+for model, res in result.items():
+    print(f"{model}: LR={res['LR']:.4f}, p-value={res['p_value']:.4f}") 
