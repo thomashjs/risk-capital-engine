@@ -81,7 +81,7 @@ fhs_value = fhs_var(returns, portfolio, 0.99)
 
 print("FHS VaR:", fhs_value)
 
-### Rolling backtest if not already in data
+### Rolling backtest to initialize and save data
 
 root = Path(__file__).resolve().parent
 data_dir = root / Path("data/processed")

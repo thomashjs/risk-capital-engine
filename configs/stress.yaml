@@ -1,0 +1,41 @@
+stress:
+  alpha: 0.99
+  window: 250
+
+  models:
+    - historical
+    - parametric_sample
+    - parametric_ewma
+    - mc_sample
+    - mc_ewma
+    - fhs
+
+  outputs:
+    include_loss_distribution: true
+    include_var_series: true
+    include_exceptions: true
+    include_summary: true
+
+  scenarios:
+
+    covid_crash:
+      type: historical
+      start: "2020-02-15"
+      end: "2020-04-15"
+      evaluation: rolling_crisis
+      metrics:
+        - worst_loss
+        - exception_count
+        - exception_rate
+        - avg_var
+        - max_loss_to_var
+
+    hypothetical_market_shock:
+      type: hypothetical
+      evaluation: shocked_distribution
+      vol_scale: 2.0
+      target_correlation: 0.9
+      metrics:
+        - stressed_var
+        - stressed_es
+        - worst_loss

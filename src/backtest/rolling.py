@@ -46,10 +46,10 @@ def rolling_var_backtest(
 
     portfolio_pnl = compute_portfolio_pnl(aligned, portfolio)
 
-    dates: list[pd.Timestamp] = []
-    var_values: list[float] = []
-    realized_pnl_values: list[float] = []
-    exceptions: list[bool] = []
+    dates = []
+    var_values = []
+    realized_pnl_values = []
+    exceptions = []
 
     for t in range(window, len(aligned)):
         window_returns = aligned.iloc[t - window:t]
