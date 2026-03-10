@@ -183,3 +183,21 @@ result = {"Historical": christoffersen_test(bt_hist),
 print("Christoffersen Test Results:")
 for model, res in result.items():
     print(f"{model}: LR={res['LR']:.4f}, p-value={res['p_value']:.4f}") 
+
+### Test stress testing module
+from src.stress.historical import stress_window
+from src.stress.reporting import stress_loss_distribution
+
+covid_returns = stress_window(
+    returns,
+    start="2020-02-20",
+    end="2020-03-23"
+)
+
+covid_losses = stress_loss_distribution(
+    covid_returns,
+    portfolio.weights,
+    portfolio.notional
+)
+
+print(covid_losses.quantile(0.99))
