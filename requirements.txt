@@ -10,6 +10,9 @@ yfinance>=0.2
 matplotlib>=3.8
 seaborn>=0.13
 
+# Markdown rendering
+tabulate>=0.9
+
 # Config management
 pyyaml>=6.0
 
