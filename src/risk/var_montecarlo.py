@@ -57,3 +57,30 @@ def mc_var(
     var_threshold = np.quantile(pnl_sims, 1 - alpha)
 
     return -float(var_threshold)
+
+'''
+Monte Carlo VaR from covariance matrix.
+'''
+def mc_var_from_cov(
+    cov: np.ndarray,
+    portfolio: Portfolio,
+    alpha: float,
+    n_sims: int = 10000,
+    mu: np.ndarray | None = None,
+    seed: int | None = None
+) -> float:
+
+    if mu is None:
+        mu = np.zeros(len(portfolio.tickers))
+
+    if seed is not None:
+        np.random.seed(seed)
+
+    sims = np.random.multivariate_normal(mu, cov, n_sims)
+
+    portfolio_returns = sims @ portfolio.weights
+    pnl_sims = portfolio_returns * portfolio.notional
+
+    var_threshold = np.quantile(pnl_sims, 1 - alpha)
+
+    return -float(var_threshold)

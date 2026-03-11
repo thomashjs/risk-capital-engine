@@ -9,20 +9,11 @@ import numpy as np
 
 def increase_correlation(
     cov: np.ndarray,
-    target_corr: float
+    target_corr: float,
+    beta: float = 0.5
 ) -> np.ndarray:
 
     std = np.sqrt(np.diag(cov))
-    corr = cov / np.outer(std, std)
-
-    n = corr.shape[0]
-    stressed_corr = corr.copy()
-
-    for i in range(n):
-        for j in range(n):
-            if i != j:
-                stressed_corr[i, j] = target_corr
-
-    stressed_cov = stressed_corr * np.outer(std, std)
-
-    return stressed_cov
+    target_cov = target_corr * np.outer(std, std)
+    
+    return (1 - beta) * cov + beta * target_cov

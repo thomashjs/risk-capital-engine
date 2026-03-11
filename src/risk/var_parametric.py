@@ -55,3 +55,16 @@ def parametric_var(
     var_value = z_score * portfolio_std * portfolio.notional
 
     return var_value
+
+def parametric_var_from_cov(
+    cov: np.ndarray,
+    portfolio: Portfolio,
+    alpha: float
+) -> float:
+
+    z = norm.ppf(alpha)
+
+    w = portfolio.weights
+    port_std = np.sqrt(w @ cov @ w)
+
+    return float(z * port_std * portfolio.notional)
