@@ -10,6 +10,7 @@ Provides tools to:
 """
 
 import pandas as pd
+import matplotlib.figure
 import matplotlib.pyplot as plt
 
 
@@ -58,7 +59,7 @@ def plot_exceptions(backtest: pd.DataFrame) -> None:
     fig.tight_layout()
     plt.show()
 
-def plot_var_comparison(backtests: dict[str, pd.DataFrame]) -> None:
+def plot_var_comparison(backtests: dict[str, pd.DataFrame]) -> matplotlib.figure.Figure:
     first = next(iter(backtests.values()))
     loss = first["Loss"]
 
@@ -74,7 +75,7 @@ def plot_var_comparison(backtests: dict[str, pd.DataFrame]) -> None:
     ax.set_xlabel("Date")
     ax.set_ylabel("Loss")
 
-    plt.show()
+    return fig
 
 def exception_summary(backtest: pd.DataFrame) -> dict:
 
