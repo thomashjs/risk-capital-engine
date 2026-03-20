@@ -1,0 +1,7 @@
+ivol:
+  start: "2012-01-01"
+  end: "2026-01-01"
+
+  futures_symbols:
+    - ES
+    - NQ
