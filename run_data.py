@@ -48,7 +48,7 @@ def main():
         except Exception as e:
             print(f"[ERROR] options {ticker}: {e}")
 
-    #     # parallel version (for initial backfill) --- --- IGNORE ---
+    #     # parallel version (for initial backfill)
     #     ingest_options_parallel(
     #     symbols=tickers,
     #     api_key=api_key,

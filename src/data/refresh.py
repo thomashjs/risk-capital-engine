@@ -15,7 +15,7 @@ from pathlib import Path
 import time
 import pandas as pd
 
-from src.data.ivol_ingest import ingest_options_single, ingest_futures, _load_date_set, _save_date_set
+from src.data.ivol_ingest import ingest_options_single, ingest_futures, _load_key_set, _save_key_set
 
 
 # ---------- helpers ----------
@@ -49,58 +49,59 @@ def refresh_options(
     processed_dir = root / Path(processed_dir)
 
     parquet_file = processed_dir / f"options_{symbol}.parquet"
-    empty_path = processed_dir / f"empty_dates_{symbol}.parquet"
-    failed_path = processed_dir / f"failed_dates_{symbol}.parquet"
+    empty_path = processed_dir / f"empty_keys_{symbol}.parquet"
+    failed_path = processed_dir / f"failed_keys_{symbol}.parquet"
 
     start_dt = pd.to_datetime(start)
     end_dt = pd.to_datetime(end)
-
-    existing = _get_existing_range(parquet_file)
-
-    # ---------- no existing data ----------
-    if existing is None:
-        print(f"[options] No existing data -> full ingest {symbol}")
-        dates = list(pd.date_range(start, end, freq="B"))
-        ingest_options_single(symbol, api_key, dates)
-        return
 
     all_dates = set(pd.date_range(start_dt, end_dt, freq="B"))
 
     # ---------- existing data ----------
     if parquet_file.exists():
         df = pd.read_parquet(parquet_file)
-        existing_dates = set(pd.to_datetime(df["date"]))
+        existing_keys = set(
+        zip(pd.to_datetime(df["date"]), df["cp"])
+    )
     else:
-        existing_dates = set()
+        existing_keys = set()
 
     # ---------- known skips ----------
-    empty_dates = _load_date_set(empty_path)
-    failed_dates = _load_date_set(failed_path)
+    empty_keys = _load_key_set(empty_path)
+    failed_keys = _load_key_set(failed_path)
 
-    # ---------- compute missing ----------
-    missing_dates = sorted(
-        all_dates - existing_dates - empty_dates - failed_dates
-    )
+    # ---------- compute missing ----------.
+    missing_calls = []
+    missing_puts = []
+    for d in all_dates:
+        if (d, "C") not in existing_keys and (d, "C") not in empty_keys and (d, "C") not in failed_keys:
+            missing_calls.append(d)
 
-    if not missing_dates:
+        if (d, "P") not in existing_keys and (d, "P") not in empty_keys and (d, "P") not in failed_keys:
+            missing_puts.append(d)
+
+    
+    if missing_calls:
+        print(f"[options] Fetching {len(missing_calls)} missing CALL dates for {symbol}")
+        ingest_options_single(
+                symbol=symbol,
+                api_key=api_key,
+                dates=missing_calls,
+                cp="C",
+            )
+
+    if missing_puts:
+        print(f"[options] Fetching {len(missing_puts)} missing PUT dates for {symbol}")
+        ingest_options_single(
+                symbol=symbol,
+                api_key=api_key,
+                dates=missing_puts,
+                cp="P",
+            )
+
+    if not missing_calls and not missing_puts:
         print(f"[options] Fully up to date: {symbol}")
         return
-
-    print(f"[options] Fetching {len(missing_dates)} missing dates for {symbol}")
-
-    # ---------- ingest only missing ----------
-    chunk_size = 20
-
-    for i in range(0, len(missing_dates), chunk_size):
-        chunk = missing_dates[i:i+chunk_size]
-
-        ingest_options_single(
-            symbol=symbol,
-            api_key=api_key,
-            dates=chunk,
-        )
-
-        time.sleep(2)  # rate limiting protection
 
     print(f"[options] Refresh complete for {symbol}")
 

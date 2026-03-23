@@ -73,13 +73,13 @@ def load_options(
     mask = (df["date"] >= start) & (df["date"] <= end)
 
     if strike_min is not None:
-        mask &= df["strike"] >= strike_min
+        mask &= df["price_strike"] >= strike_min
 
     if strike_max is not None:
-        mask &= df["strike"] <= strike_max
+        mask &= df["price_strike"] <= strike_max
 
     if call_put is not None:
-        mask &= df["callPut"] == call_put
+        mask &= df["call_put"] == call_put
 
     df = df.loc[mask].copy()
 

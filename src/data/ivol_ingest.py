@@ -57,7 +57,7 @@ def _get(url: str, params: dict, retries: int = 5) -> pd.DataFrame:
 
         return pd.DataFrame(data)
     
-    print("[WARN] Max retries exceeded → skipping")
+    print("[WARN] Max retries exceeded -> skipping")
     raise RuntimeError("Max retries exceeded")
 
 
@@ -71,17 +71,22 @@ def _date_range_chunks(start: str, end: str, days: int = 90):
         yield current.strftime("%Y-%m-%d"), chunk_end.strftime("%Y-%m-%d")
         current = chunk_end
 
-def _load_date_set(path: Path) -> set[pd.Timestamp]:
+def _load_key_set(path: Path) -> set[tuple[pd.Timestamp, str]]:
     if not path.exists():
         return set()
+
     df = pd.read_parquet(path)
-    return set(pd.to_datetime(df["date"]))
+    if "cp" not in df.columns:
+        raise ValueError(f"{path} has wrong schema (missing cp)")
+    
+    return set(zip(pd.to_datetime(df["date"]), df["cp"]))
 
 
-def _save_date_set(path: Path, dates: set[pd.Timestamp]) -> None:
-    if not dates:
+def _save_key_set(path: Path, keys: set[tuple[pd.Timestamp, str]]) -> None:
+    if not keys:
         return
-    df = pd.DataFrame({"date": sorted(dates)})
+
+    df = pd.DataFrame(keys, columns=["date", "cp"])
     df.to_parquet(path)
 
 
@@ -91,6 +96,7 @@ def ingest_options_single(
     symbol: str,
     api_key: str,
     dates: list[pd.Timestamp],
+    cp: str,
     raw_dir: str | Path = "data/raw/ivol/options",
     processed_dir: str | Path = "data/processed/ivol",
 ) -> None:
@@ -104,8 +110,10 @@ def ingest_options_single(
 
     all_data = []
 
-    empty_dates = set()
-    failed_dates = set()
+    empty_keys = set()   # (date, cp)
+    failed_keys = set()
+
+    empty_streak = 0
 
     for i, d in enumerate(dates):
         date_str = d.strftime("%Y-%m-%d")
@@ -121,43 +129,52 @@ def ingest_options_single(
                     "tradeDate": date_str,
                     "dteFrom": 7,
                     "dteTo": 60,
-                    "cp": "C",
+                    "cp": cp,
                     "moneynessFrom": -10,
                     "moneynessTo": 10,
                 },
             )
         except Exception as e:
-            failed_dates.add(d)
-            print(f"[WARN] {symbol} {date_str} failed: {e}")
+            failed_keys.add((d, cp))
+            print(f"[WARN] {symbol} {date_str} {cp} failed: {e}")
             continue
 
         # Record empty dates
         if df.empty:
-            empty_dates.add(d)
-            continue
+            # record empty streaks for rate limit protection
+            empty_streak += 1
+            empty_keys.add((d, cp))
 
-        if not df.empty:
-            # attach trade date explicitly (important!)
-            df["date"] = d
-            df["symbol"] = symbol
-            all_data.append(df)
-        # rate limiting protection
+            if empty_streak >= 10: # rate limit protection
+                time.sleep(1)
+                empty_streak = 0
+            continue
+        else:
+            empty_streak = 0
+
+        # attach trade date and call/put type explicitly
+        df["date"] = d
+        df["symbol"] = symbol
+        df["cp"] = cp
+
+        all_data.append(df)
+        # rate limit protection
         time.sleep(0.3)
 
     # save empty dates tracking
-    empty_path = processed_dir / f"empty_dates_{symbol}.parquet"
-    failed_path = processed_dir / f"failed_dates_{symbol}.parquet"
+    empty_path = processed_dir / f"empty_keys_{symbol}.parquet"
+    failed_path = processed_dir / f"failed_keys_{symbol}.parquet"
 
-    existing_empty = _load_date_set(empty_path)
-    existing_failed = _load_date_set(failed_path)
+    existing_empty = _load_key_set(empty_path)
+    existing_failed = _load_key_set(failed_path)
 
-    _save_date_set(empty_path, existing_empty | empty_dates)
-    _save_date_set(failed_path, existing_failed | failed_dates)
+    _save_key_set(empty_path, existing_empty | empty_keys)
+    _save_key_set(failed_path, existing_failed | failed_keys)
 
     if not all_data:
         print("No data downloaded.")
         return
-
+    
     full_df = pd.concat(all_data, ignore_index=True)
 
     parquet_file = processed_dir / f"options_{symbol}.parquet"
@@ -166,8 +183,8 @@ def ingest_options_single(
         existing = pd.read_parquet(parquet_file)
         full_df = pd.concat([existing, full_df], ignore_index=True)
 
-        # deduplicate (IMPORTANT: use subset if possible later)
-        full_df = full_df.drop_duplicates()
+    # deduplicate (IMPORTANT: use subset if possible later)
+    full_df = full_df.drop_duplicates()
 
     full_df.to_parquet(parquet_file)
 
@@ -179,6 +196,7 @@ def ingest_options_parallel(
     symbols: list[str],
     api_key: str,
     dates: list[pd.Timestamp],
+    cp: str,
     processed_dir: str | Path = "data/processed/ivol",
     max_workers: int = 2,  # IMPORTANT: keep small to avoid 429
 ) -> None:
@@ -196,6 +214,7 @@ def ingest_options_parallel(
                 symbol,
                 api_key,
                 dates,
+                cp,
                 processed_dir = processed_dir,
             )
             for symbol in symbols
